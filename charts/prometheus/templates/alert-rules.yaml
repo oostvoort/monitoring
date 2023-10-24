@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }}-alertrules-cm
+  namespace: {{ .Values.projectName }}-{{ .Values.nameSpace }}
+data:
+  node_exporter_rules.yml: |
+    groups:
+    - name: node-exporter-alerts
+      rules:
+      # Alert for CPU usage
+      - alert: HighCPUUsage
+        expr: 100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+
+      # Alert for Memory usage
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemFree_bytes - node_memory_Buffers_bytes - node_memory_Cached_bytes ) / node_memory_MemTotal_bytes * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+
+      # Alert for Disk usage
+      - alert: HighDiskUsage
+        expr: (node_filesystem_avail_bytes / node_filesystem_size_bytes) * 100 < 20
+        for: 5m
+        labels:
+          severity: warning
+
+      # Alert for Uptime
+      - alert: LowUptime
+        expr: node_time_seconds - node_boot_time_seconds < 300
+        for: 5m
+        labels:
+          severity: warning

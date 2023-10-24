@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }} 
+  namespace: {{ .Values.projectName }}-{{ .Values.nameSpace }}
+  labels:
+    app: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }} 
+spec:
+  type: {{ .Values.ContainerService.type }}
+  ports:
+  - name: metrics
+    port: {{ .Values.ContainerService.port }}
+    targetPort: {{ .Values.ContainerService.port }}
+  selector:
+    app: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }} 

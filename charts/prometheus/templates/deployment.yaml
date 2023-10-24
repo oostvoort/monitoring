@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }} 
+  namespace: {{ .Values.projectName }}-{{ .Values.nameSpace }}
+  labels:
+    app: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }} 
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }} 
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }} 
+    spec:
+      initContainers:
+      - name: volume-permissions
+        image: busybox
+        command: ['sh', '-c', 'chown -R 65534:65534 /prometheus']
+        volumeMounts:
+        - name: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }}-pvc
+          mountPath: /prometheus    
+      containers:
+      - name: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }} 
+        image: {{ .Values.dockerImage }}:{{ .Values.dockerVersion }}
+        ports:
+        - containerPort: {{ .Values.ContainerService.port }}  
+        volumeMounts:
+        - name: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }}-cm
+          mountPath: /etc/prometheus/prometheus.yml
+          subPath: prometheus.yml
+        - name: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }}-alertrules-cm
+          mountPath: /etc/prometheus/alert.rules
+          subPath: alert.rules
+        - name: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }}-pvc
+          mountPath: /prometheus
+      volumes:
+      - name: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }}-cm
+        configMap:
+          name: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }}-cm
+      - name: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }}-alertrules-cm
+        configMap:
+          name: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }}-alertrules-cm
+      - name: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }}-pvc
+        persistentVolumeClaim:
+          claimName: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }}-pvc

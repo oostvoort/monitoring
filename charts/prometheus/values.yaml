@@ -1,0 +1,23 @@
+projectName: monitoring
+nameSpace: main
+app: prometheus
+
+
+replicaSet: 1
+minReplicas: 1
+maxReplicas: 3
+averageUtilization: 70
+
+
+ContainerService:
+  type: ClusterIP  # {{ .Values.ContainerService.type }}
+  port: 9090       # {{ .Values.ContainerService.port }}
+
+
+domainName: oostvoort.work                # {{ .Values.domainName }}
+
+subDomainName: 
+  prometheus: alert.aw                    # {{ .Values.subDomainName.prometheus }}
+
+dockerImage: prom/prometheus              # {{ .Values.dockerImage }}
+dockerVersion: latest                     # {{ .Values.dockerVersion }}

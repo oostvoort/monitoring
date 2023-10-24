@@ -1,0 +1,19 @@
+projectName: monitoring
+nameSpace: main
+app: nodeexporter
+
+replicaSet: 1
+minReplicas: 1
+maxReplicas: 3
+averageUtilization: 70
+
+
+ContainerService:
+  type: ClusterIP  # {{ .Values.ContainerService.type }}
+  port: 9100       # {{ .Values.ContainerService.port }}
+
+
+dockerImage: prom/node-exporter          # {{ .Values.dockerImage }}
+dockerVersion: latest                     # {{ .Values.dockerVersion }}
+
+

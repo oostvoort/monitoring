@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }} 
+  namespace: {{ .Values.projectName }}-{{ .Values.nameSpace }}
+  labels:
+    app: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }} 
+spec:
+  replicas: {{ .Values.replicaSet }}
+  selector:
+    matchLabels:
+      app: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }}   
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }} 
+    spec:
+      hostNetwork: true
+      containers:
+        - name: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }} 
+          image: "{{ .Values.dockerImage }}:{{ .Values.dockerVersion }}"
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: rootfs
+              mountPath: /rootfs
+              readOnly: true          
+          ports:
+            - name: http
+              containerPort: {{ .Values.ContainerService.port }}
+      volumes:
+        - name: rootfs
+          hostPath:
+            path: /              
