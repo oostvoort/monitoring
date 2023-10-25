@@ -1,0 +1,15 @@
+projectName: monitoring
+nameSpace: main
+app: alertmanager
+
+replicaSet: 1
+minReplicas: 1
+maxReplicas: 3
+averageUtilization: 70
+
+ContainerService:
+  type: ClusterIP  # {{ .Values.ContainerService.type }}
+  port: 9093       # {{ .Values.ContainerService.port }}
+
+dockerImage: prom/alertmanager             # {{ .Values.dockerImage }}
+dockerVersion: latest                     # {{ .Values.dockerVersion }}

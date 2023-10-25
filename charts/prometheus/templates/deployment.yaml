@@ -23,26 +23,28 @@ spec:
         - name: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }}-pvc
           mountPath: /prometheus    
       containers:
-      - name: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }} 
-        image: {{ .Values.dockerImage }}:{{ .Values.dockerVersion }}
-        ports:
-        - containerPort: {{ .Values.ContainerService.port }}  
+      - name: prometheus
+        image: prom/prometheus
         volumeMounts:
-        - name: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }}-cm
+        - name: config-volume
           mountPath: /etc/prometheus/prometheus.yml
           subPath: prometheus.yml
-        - name: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }}-alertrules-cm
+        - name: alert-rules-volume
           mountPath: /etc/prometheus/alert.rules
           subPath: alert.rules
-        - name: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }}-pvc
-          mountPath: /prometheus
       volumes:
-      - name: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }}-cm
+      - name: config-volume
         configMap:
           name: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }}-cm
-      - name: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }}-alertrules-cm
+          items:
+          - key: prometheus.yml
+            path: prometheus.yml
+      - name: alert-rules-volume
         configMap:
-          name: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }}-alertrules-cm
+          name: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }}-cm
+          items:
+          - key: alert.rules
+            path: alert.rules
       - name: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }}-pvc
         persistentVolumeClaim:
-          claimName: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }}-pvc
+          claimName: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }}-pvc            

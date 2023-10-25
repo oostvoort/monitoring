@@ -1,0 +1,69 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.app }}-cm
+  namespace: {{ .Values.projectName }}-{{ .Values.nameSpace }}
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+    rule_files:
+      - "/etc/prometheus/alert.rules"   
+    alerting:
+      alertmanagers:
+      - static_configs:
+        - targets: ["{{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.alerting }}:9093"]         
+    scrape_configs:
+      - job_name: 'node-exporter'
+        static_configs:
+        - targets: ['{{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.exporter.nodeexporter }}:9100']        
+   
+      - job_name: 'kube-state-metrics'
+        static_configs:
+        - targets: ['{{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.exporter.kubestatemetrics }}:8080']  
+
+      - job_name: 'blackbox-exporter'
+        metrics_path: /probe
+        params:
+          module: [http_2xx]  # Look for a HTTP 200 response.
+        static_configs:
+          - targets:
+            - https://dojorps.dev.aw.oostvoort.work
+            - https://imaigine.world/
+            - https://keiko.aw.oostvoort.work
+            - https://pixelaw.dev.aw.oostvoort.work/
+
+        relabel_configs:
+          - source_labels: [__address__]
+            target_label: __param_target
+          - source_labels: [__param_target]
+            target_label: instance
+          - target_label: __address__
+            replacement: '{{ .Values.projectName }}-{{ .Values.nameSpace }}-{{ .Values.exporter.blackbox }}:9115'
+
+  alert.rules: |
+    groups:
+    - name: node-exporter-alerts
+      rules:
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+
+    - name: blackbox-exporter-alerts
+      rules:
+      - alert: EndpointDown
+        expr: probe_success == 0
+        for: 1m
+        labels:
+          severity: critical
+    
+        
+    - name: blackbox-dns-probing
+      rules:
+      - alert: DnsProbeFailed
+        expr: probe_success == 0
+        for: 2m
+        labels:
+          severity: warning        

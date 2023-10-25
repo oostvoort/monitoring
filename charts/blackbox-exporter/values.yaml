@@ -1,0 +1,20 @@
+projectName: monitoring
+nameSpace: main
+app: blackbox
+
+
+replicaSet: 1
+minReplicas: 1
+maxReplicas: 3
+averageUtilization: 70
+
+
+ContainerService:
+  type: ClusterIP  # {{ .Values.ContainerService.type }}
+  port: 9115       # {{ .Values.ContainerService.port }}
+
+
+dockerImage: prom/blackbox-exporter        # {{ .Values.dockerImage }}
+dockerVersion: latest                     # {{ .Values.dockerVersion }}
+
+

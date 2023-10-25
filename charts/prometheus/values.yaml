@@ -1,6 +1,12 @@
 projectName: monitoring
 nameSpace: main
 app: prometheus
+alerting: alertmanager
+exporter:                             # {{ .Values.exporter.nodeexporter }}
+  nodeexporter: nodeexporter
+  blackbox: blackbox
+  cadvisor: cadvisor
+  kubestatemetrics: kubestatemetrics
 
 
 replicaSet: 1
