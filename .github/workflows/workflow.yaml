@@ -54,11 +54,11 @@ jobs:
 
       - name: Deploy Application to ArgoCD
         env:
-          ARGOCD_SERVER: ${{ vars.ARGOCD_SERVER }}
+          ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
           ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}   
         run: |
           argocd app create prom-stack \
-          --repo https://github.com/your-repo.git \
+          --repo https://github.com/oostvoort/monitoring.git \
           --path charts/ \
           --dest-server https://kubernetes.default.svc \
           --dest-namespace $PROJECTNAME-main \
