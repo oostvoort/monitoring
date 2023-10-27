@@ -1,8 +1,8 @@
 name: Helm release and deploy to argoCD
 on:
     push:
-      tags:
-        - "*"
+      branches:
+        - main
 env:
   PROJECTNAME: prometheus
   REGISTRY: ${{ vars.DOCKERHUB_USERNAME}}
