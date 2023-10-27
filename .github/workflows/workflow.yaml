@@ -4,7 +4,7 @@ on:
       branches:
         - main
 env:
-  PROJECTNAME: prometheus
+  PROJECTNAME: monitoring
   REGISTRY: ${{ vars.DOCKERHUB_USERNAME}}
   VERSION: ${{github.ref_name}}
 
@@ -30,99 +30,40 @@ jobs:
           chmod 700 get_helm.sh
           ./get_helm.sh
 
-      - name: Lint Helm Chart         
-        run: |       
-          helm lint ./charts/$PROJECTNAME
+          
+      - name: Lint Helm Charts
+        run: |
+          for chart in charts/*; do
+            helm lint $chart
+          done          
 
-  helmRelease:
+  
+  deploy:
     needs: [helmTest]
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v2
-        with:
-          fetch-depth: 0          
 
-      - name: Configure Git
+      - name: Install ArgoCD CLI if not exists
         run: |
-          git config user.name "$GITHUB_ACTOR"
-          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
-
-      - name: Semantic Versioning
-        id: semantic
-        uses: cycjimmy/semantic-release-action@v2
-        with:
-          semantic_version: 17
-          extra_args: "-e GH_TOKEN=${{ secrets.GITHUB_TOKEN }}"
-          branches: main
-          dry_run: false
-          configuration_file: release.config.js  
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Get the latest release tag
-        id: latesttag
-        run: echo "LATEST_TAG=$(curl --silent https://api.github.com/repos/oostvoort/monitoring/releases/latest | jq -r .tag_name)" >> $GITHUB_ENV
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install Helm
-        uses: azure/setup-helm@v1
-        with:
-          version: v3.8.1
-
-      # Package Helm chart with new version
-      - name: Package Helm chart
-        run: |
-          if [[ -n "${{ steps.semantic.outputs.new_release_version }}" ]]; then
-            STRIPPED_TAG="${{ steps.semantic.outputs.new_release_version }}"
-            STRIPPED_TAG=${STRIPPED_TAG#prometheus-}
-            helm package charts/my-chart --version $STRIPPED_TAG
-          else
-            echo "No new version, skipping package step."
+          if ! command -v argocd &> /dev/null; then
+            curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+            chmod +x /usr/local/bin/argocd
           fi
-      
 
-      - name: Update index.yaml
-        run: helm repo index . --url https://oostvoort.github.io/monitoring/
-
-
-      - name: Deploy to gh-pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./ 
-          publish_branch: gh-pages
-  
-#   deploy:
-#     needs: [helmRelease]
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v2
-
-#       - name: Install ArgoCD CLI if not exists
-#         run: |
-#           if ! command -v argocd &> /dev/null; then
-#             curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
-#             chmod +x /usr/local/bin/argocd
-#           fi
-
-#       - name: Deploy Application to ArgoCD
-#         env:
-#           ARGOCD_SERVER: ${{ vars.ARGOCD_SERVER }}
-#           ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}   
-#         run: |
-#           argocd app create $PROJECTNAME \
-#           --repo  \
-#           --path chart/  \
-#           --revision ${{ steps.semantic.outputs.new_release_version }} \
-#           --helm-chart $PROJECTNAME \
-#           --dest-namespace $PROJECTNAME-dev \
-#           --dest-server https://kubernetes.default.svc \
-#           --upsert                            
-#           argocd app sync $PROJECTNAME-dev
-#           argocd app wait $PROJECTNAME-dev
-  
+      - name: Deploy Application to ArgoCD
+        env:
+          ARGOCD_SERVER: ${{ vars.ARGOCD_SERVER }}
+          ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}   
+        run: |
+          argocd app create prom-stack \
+          --repo https://github.com/your-repo.git \
+          --path charts/ \
+          --dest-server https://kubernetes.default.svc \
+          --dest-namespace $PROJECTNAME-main \
+          --project default \
+          --sync-policy automated   
+          --upsert         
 
           
