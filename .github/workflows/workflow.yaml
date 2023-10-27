@@ -60,6 +60,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Get the latest release tag
+        id: latesttag
+        run: echo "LATEST_TAG=$(curl --silent https://api.github.com/repos/oostvoort/monitoring/releases/latest | jq -r .tag_name)" >> $GITHUB_ENV
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Install Helm
         uses: azure/setup-helm@v1
         with:
@@ -67,7 +73,12 @@ jobs:
 
       # Package Helm chart with new version
       - name: Package Helm chart
-        run: helm package charts/my-chart --version ${{ steps.semantic.outputs.new_release_version }}
+        run: |
+          if [[ -n "${{ steps.semantic.outputs.new_release_version }}" ]]; then
+            helm package charts/my-chart --version ${{ steps.semantic.outputs.new_release_version }}
+          else
+            echo "No new version, skipping package step."
+          fi
       
 
       - name: Update index.yaml
