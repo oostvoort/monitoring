@@ -7,19 +7,19 @@ appVersion: "1.16.0"
 dependencies:
   - name: prometheus
     version: "1.0.0"
-    repository: "file://../charts/prometheus"
+    repository: "file://../prometheus"
   - name: alertmanager
     version: "1.0.0"
-    repository: "file://../charts/alertmanager"
+    repository: "file://../alertmanager"
   - name: blackbox-exporter
     version: "1.0.0"
-    repository: "file://../charts/blackbox-exporter"
+    repository: "file://../blackbox-exporter"
   - name: node-exporter
     version: "1.0.0"
-    repository: "file://../charts/node-exporter"
+    repository: "file://../node-exporter"
   - name: grafana
     version: "1.0.0"
-    repository: "file://../charts/grafana"
+    repository: "file://../grafana"
   - name: kube-state-metrics
     version: "1.0.0"
-    repository: "file://../charts/kube-state-metrics"    
+    repository: "file://../kube-state-metrics"    
