@@ -45,6 +45,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Extract branch name
+        run: echo "REF_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+
       - name: Install ArgoCD CLI if not exists
         run: |
           if ! command -v argocd &> /dev/null; then
@@ -57,13 +60,13 @@ jobs:
           ARGOCD_SERVER: ${{ secrets.ARGOCD_SERVER }}
           ARGOCD_AUTH_TOKEN: ${{ secrets.ARGOCD_AUTH_TOKEN }}   
         run: |
-          argocd app create prom-stack \
+          argocd app create $PROJECTNAME-$REF_NAME \
           --repo https://github.com/oostvoort/monitoring.git \
           --path charts/ \
           --dest-server https://kubernetes.default.svc \
-          --dest-namespace $PROJECTNAME-main \
+          --dest-namespace $PROJECTNAME-$REF_NAME \
           --project default \
           --sync-policy automated   
-          --upsert         
+     
 
           
