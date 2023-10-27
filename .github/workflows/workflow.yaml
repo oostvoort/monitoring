@@ -75,7 +75,9 @@ jobs:
       - name: Package Helm chart
         run: |
           if [[ -n "${{ steps.semantic.outputs.new_release_version }}" ]]; then
-            helm package charts/my-chart --version ${{ steps.semantic.outputs.new_release_version }}
+            STRIPPED_TAG="${{ steps.semantic.outputs.new_release_version }}"
+            STRIPPED_TAG=${STRIPPED_TAG#prometheus-}
+            helm package charts/my-chart --version $STRIPPED_TAG
           else
             echo "No new version, skipping package step."
           fi
