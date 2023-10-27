@@ -32,7 +32,7 @@ jobs:
 
       - name: Lint Helm Chart         
         run: |       
-          helm lint ./chart/$PROJECTNAME
+          helm lint ./charts/$PROJECTNAME
 
   helmRelease:
     needs: [helmTest]
