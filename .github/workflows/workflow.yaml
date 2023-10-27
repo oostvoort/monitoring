@@ -62,7 +62,7 @@ jobs:
         run: |
           argocd app create $PROJECTNAME-$REF_NAME \
           --repo https://github.com/oostvoort/monitoring.git \
-          --path charts/ \
+          --path umbrella-chart/ \
           --dest-server https://kubernetes.default.svc \
           --dest-namespace $PROJECTNAME-$REF_NAME \
           --project default \
