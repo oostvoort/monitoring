@@ -1,0 +1,10 @@
+{
+    "name": "my-non-js-project",
+    "version": "0.0.0-semantically-released",
+    "description": "My non-JavaScript project",
+    "repository": {
+      "type": "git",
+      "url": "git+https://github.com/oostvoort/monitoring.git"
+    }
+  }
+  
