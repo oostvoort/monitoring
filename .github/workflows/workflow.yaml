@@ -1,77 +1,75 @@
-# name: Helm release and deploy to argoCD
-# on:
-#     push:
-#       tags:
-#         - "*"
-# env:
-#   PROJECTNAME: prometheus
-#   REGISTRY: ${{ vars.DOCKERHUB_USERNAME}}
-#   VERSION: ${{github.ref_name}}
+name: Helm release and deploy to argoCD
+on:
+    push:
+      tags:
+        - "*"
+env:
+  PROJECTNAME: prometheus
+  REGISTRY: ${{ vars.DOCKERHUB_USERNAME}}
+  VERSION: ${{github.ref_name}}
 
-# defaults:
-#   run:
-#     shell: bash
+defaults:
+  run:
+    shell: bash
 
-# jobs:
+jobs:
+  helmTest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-#   helmTest:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout code
-#         uses: actions/checkout@v2
+      - name: Configure Git
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"        
 
-#       - name: Install Helm
-#         run: |
-#           curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
-#           chmod 700 get_helm.sh
-#           ./get_helm.sh
+      - name: Install Helm
+        run: |
+          curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+          chmod 700 get_helm.sh
+          ./get_helm.sh
 
-#       - name: Lint Helm Chart         
-#         run: |       
-#           helm lint ./chart/$PROJECTNAME
+      - name: Lint Helm Chart         
+        run: |       
+          helm lint ./chart/$PROJECTNAME
 
-#   helmRelease:
-#     needs: [helmTest]
-#     runs-on: ubuntu-latest
-#     steps:
-#       - name: Checkout
-#         uses: actions/checkout@v2
-#         with:
-#           fetch-depth: 0
+  helmRelease:
+    needs: [helmTest]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0          
 
-#       - name: Configure Git
-#         run: |
-#           git config user.name "$GITHUB_ACTOR"
-#           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
-#       - name: Install Helm
-#         uses: azure/setup-helm@v1
-#         with:
-#           version: v3.8.1
+      - name: Semantic Versioning
+        id: semantic
+        uses: cycjimmy/semantic-release-action@v2
+        with:
+          semantic_version: 17
+          branches: main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-#       - name: custom packaging
-#         run: |
-#           VERSION=${{github.ref_name}}
-#           rm -rf .cr-release-packages
-#           mkdir -p .cr-release-packages
-#           helm package chart/$PROJECTNAME --app-version=${VERSION:1} --version=${VERSION:1} --destination=.cr-release-packages
+      - name: Install Helm
+        uses: azure/setup-helm@v1
+        with:
+          version: v3.8.1
 
-#       - name: Run chart-releaser
-#         # switch back to helm/chart-releaser-action if this contribution is ever mergedd
-#         uses: askcloudarchitech/chart-releaser-action@skip-packaging-option
-#         with:
-#           skip_packaging: true
-#         env:
-#           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-
-#       - name: Create GitHub Release
-#         env:
-#           GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-#         run: |
-#           TAG=${{ github.ref }} 
-#           VERSION=${TAG#refs/tags/}     
-#           gh release create $VERSION -t $VERSION -n "Release notes for $VERSION"
-     
+      - name: Run chart-releaser
+        uses: helm/chart-releaser-action@v1.1.0
+        with:
+          charts_dir: charts  # Replace with your charts directory
+          version: ${{ steps.semantic.outputs.new_release_version }}
+        env:
+          CR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
 #   deploy:
 #     needs: [helmRelease]
 #     runs-on: ubuntu-latest
@@ -94,7 +92,7 @@
 #           argocd app create $PROJECTNAME \
 #           --repo  \
 #           --path chart/  \
-#           --revision ${VERSION:1} \
+#           --revision ${{ steps.semantic.outputs.new_release_version }} \
 #           --helm-chart $PROJECTNAME \
 #           --dest-namespace $PROJECTNAME-dev \
 #           --dest-server https://kubernetes.default.svc \
