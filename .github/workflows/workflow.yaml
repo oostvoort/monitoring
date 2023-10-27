@@ -53,7 +53,10 @@ jobs:
         uses: cycjimmy/semantic-release-action@v2
         with:
           semantic_version: 17
+          extra_args: "-e GH_TOKEN=${{ secrets.GITHUB_TOKEN }}"
           branches: main
+          dry_run: false
+          configuration_file: release.config.js  
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -62,13 +65,21 @@ jobs:
         with:
           version: v3.8.1
 
-      - name: Run chart-releaser
-        uses: helm/chart-releaser-action@v1.1.0
+      # Package Helm chart with new version
+      - name: Package Helm chart
+        run: helm package charts/my-chart --version ${{ steps.semantic.outputs.new_release_version }}
+      
+
+      - name: Update index.yaml
+        run: helm repo index . --url https://oostvoort.github.io/monitoring/
+
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          charts_dir: charts  # Replace with your charts directory
-          version: ${{ steps.semantic.outputs.new_release_version }}
-        env:
-          CR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./ 
+          publish_branch: gh-pages
   
 #   deploy:
 #     needs: [helmRelease]
